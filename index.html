@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>Friends Only 1対1チャット</title>
+</head>
+<body style="font-family:sans-serif; text-align:center;">
+
+<h2>Friends Only 1対1チャット</h2>
+
+<!-- 入力欄 -->
+<p>ルーム名: <input id="room" placeholder="Room名"></p>
+<p>ユーザー名: <input id="user" placeholder="User名"></p>
+<button onclick="joinRoom()">ルームに参加</button>
+
+<!-- チャットエリア（最初は非表示） -->
+<div id="chatArea" style="display:none; margin-top:10px;">
+  <h3 id="roomLabel"></h3>
+  <div id="chat" style="border:1px solid #aaa; height:200px; overflow:auto; padding:5px; text-align:left;"></div>
+  <input id="msg" placeholder="メッセージ">
+  <button onclick="sendMsg()">送信</button>
+</div>
+
+<!-- Firebase SDK 互換版 -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+
+<script>
+  // 🔹 変数を先に宣言
+  let roomName = '';
+  let userName = '';
+
+  // 🔹 Firebase 設定（出岡のもの）
+  const firebaseConfig = {
+    apiKey: "AIzaSyBjz4Hy3219is1DzpBcC4aynentrhbGdGU",
+    authDomain: "friends-only-b979c.firebaseapp.com",
+    databaseURL: "https://friends-only-b979c-default-rtdb.firebaseio.com",
+    projectId: "friends-only-b979c",
+    storageBucket: "friends-only-b979c.firebasestorage.app",
+    messagingSenderId: "158586138885",
+    appId: "1:158586138885:web:b5515754ccbc3ee9dd876c",
+    measurementId: "G-0TS6MJD52X"
+  };
+
+  // 🔹 Firebase 初期化
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
+  // ルームに参加
+  function joinRoom(){
+    roomName = document.getElementById("room").value.trim();
+    userName = document.getElementById("user").value.trim();
+
+    if(!roomName || !userName){
+      alert("ルーム名とユーザー名を入力してください");
+      return;
+    }
+
+    document.getElementById("chatArea").style.display = "block";
+    document.getElementById("roomLabel").innerText = "Room: " + roomName;
+
+    const chatRef = db.ref("rooms/" + roomName + "/chat");
+    chatRef.on("child_added", snapshot => {
+      const val = snapshot.val();
+      const div = document.getElementById("chat");
+      div.innerHTML += `<b>${val.user}:</b> ${val.msg}<br>`;
+      div.scrollTop = div.scrollHeight;
+    });
+  }
+
+  // メッセージ送信
+  function sendMsg(){
+    const text = document.getElementById("msg").value.trim();
+    if(!text) return;
+
+    const chatRef = db.ref("rooms/" + roomName + "/chat");
+    chatRef.push({ user: userName, msg: text });
+    document.getElementById("msg").value = "";
+  }
+</script>
+
+</body>
+</html>
